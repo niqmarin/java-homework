@@ -1,7 +1,7 @@
 package ru.geekbrains.hw12;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Scanner;
 
 public class Homework12 {
@@ -19,7 +19,7 @@ public class Homework12 {
         new Homework12().arrayCalculate2(n);
     }
 
-    //вычисление маасива в одном потоке
+    //вычисление массива в одном потоке
     public static void arrayCalculate1() {
 
         float[] arr = new float[SIZE];
@@ -44,7 +44,7 @@ public class Homework12 {
         int newSize = SIZE / n;
         int newSizeLast = SIZE - newSize * (n - 1); //на случай если массив нельзя разделить на равные части
 
-        ArrayList<float[]> arrList = new ArrayList<>();
+        HashMap<Integer, float[]> hashMap = new HashMap<>();
         //разделение массива на несколько
         for (int i = 0, pos = 0; i < n; i++, pos += newSize) {
             float[] arr01;
@@ -56,13 +56,13 @@ public class Homework12 {
                 arr01 = new float[newSize];
                 System.arraycopy(arr, pos, arr01, 0, newSize);
             }
-            arrList.add(arr01);
+            hashMap.put(pos, arr01);
         }
 
         //запуск обработки массивов в потоках
         Thread[] myThreads = new Thread[n];
-        for (int i = 0; i < n; i++) {
-            myThreads[i] = new MyThread(arrList.get(i));
+        for (int i = 0, pos = 0; i < n; i++, pos += newSize) {
+            myThreads[i] = new MyThread(pos, hashMap.get(pos));
             myThreads[i].start();
         }
         for (Thread myThread : myThreads) {
@@ -77,11 +77,11 @@ public class Homework12 {
 
         //склейка массивов в один
         for (int i = 0, pos = 0; i < n; i++, pos += newSize) {
-            if (i == n -1) {
-                System.arraycopy(arrList.get(i), 0, arr, pos, newSizeLast);
+            if (i == n - 1) {
+                System.arraycopy(hashMap.get(pos), 0, arr, pos, newSizeLast);
             }
             else {
-                System.arraycopy(arrList.get(i), 0, arr, pos, newSize);
+                System.arraycopy(hashMap.get(pos), 0, arr, pos, newSize);
             }
         }
 
@@ -92,15 +92,17 @@ public class Homework12 {
     class MyThread extends Thread {
 
         float[] arr;
+        int pos;
 
-        public MyThread(float[] arr) {
+        public MyThread(int pos, float[] arr) {
+            this.pos = pos;
             this.arr = arr;
         }
 
         @Override
         public void run() {
             for (int i  = 0; i < arr.length; i++) {
-                arr[i] = (float)(arr[i] * Math.sin(0.2f + i / 5) * Math.cos(0.2f + i / 5) * Math.cos(0.4f + i / 2));
+                arr[i] = (float)(arr[i] * Math.sin(0.2f + (i + pos) / 5) * Math.cos(0.2f + (i + pos) / 5) * Math.cos(0.4f + (i + pos) / 2));
             }
         }
     }
